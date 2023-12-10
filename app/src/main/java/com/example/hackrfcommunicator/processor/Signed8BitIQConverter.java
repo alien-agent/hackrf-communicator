@@ -23,17 +23,17 @@ public class Signed8BitIQConverter extends IQConverter {
 
         lookupTable = new float[256];
         for (int i = 0; i < 256; i++)
-            lookupTable[i] = (i-128) / 128.0f;
+            lookupTable[i] = (i - 128) / 128.0f;
     }
 
     @Override
     protected void generateMixerLookupTable(int mixFrequency) {
         // If mix frequency is too low, just add the sample rate (sampled spectrum is periodic):
-        if(mixFrequency == 0 || (sampleRate / Math.abs(mixFrequency) > MAX_COSINE_LENGTH))
+        if (mixFrequency == 0 || (sampleRate / Math.abs(mixFrequency) > MAX_COSINE_LENGTH))
             mixFrequency += sampleRate;
 
         // Only generate lookupTable if null or invalid:
-        if(cosineRealLookupTable == null || mixFrequency != cosineFrequency) {
+        if (cosineRealLookupTable == null || mixFrequency != cosineFrequency) {
             cosineFrequency = mixFrequency;
             int bestLength = calcOptimalCosineLength();
             cosineRealLookupTable = new float[bestLength][256];
@@ -59,42 +59,16 @@ public class Signed8BitIQConverter extends IQConverter {
         int startIndex = samplePacket.size();
         float[] re = samplePacket.re();
         float[] im = samplePacket.im();
-        for (int i = 0; i < packet.length; i+=2) {
-            re[startIndex+count] = lookupTable[packet[i]+128];
-            im[startIndex+count] = lookupTable[packet[i+1]+128];
+        for (int i = 0; i < packet.length; i += 2) {
+            re[startIndex + count] = lookupTable[packet[i] + 128];
+            im[startIndex + count] = lookupTable[packet[i + 1] + 128];
             count++;
-            if(startIndex+count >= capacity)
+            if (startIndex + count >= capacity)
                 break;
         }
-        samplePacket.setSize(samplePacket.size()+count);	// update the size of the sample packet
-        samplePacket.setSampleRate(sampleRate);				// update the sample rate
-        samplePacket.setFrequency(frequency);				// update the frequency
-        return count;
-    }
-
-    @Override
-    public int mixPacketIntoSamplePacket(byte[] packet, SamplePacket samplePacket, long channelFrequency) {
-        int mixFrequency = (int)(frequency - channelFrequency);
-
-        generateMixerLookupTable(mixFrequency);	// will only generate table if really necessary
-
-        // Mix the samples from packet and store the results in the samplePacket
-        int capacity = samplePacket.capacity();
-        int count = 0;
-        int startIndex = samplePacket.size();
-        float[] re = samplePacket.re();
-        float[] im = samplePacket.im();
-        for (int i = 0; i < packet.length; i+=2) {
-            re[startIndex+count] = cosineRealLookupTable[cosineIndex][packet[i]+128] - cosineImagLookupTable[cosineIndex][packet[i+1]+128];
-            im[startIndex+count] = cosineRealLookupTable[cosineIndex][packet[i+1]+128] + cosineImagLookupTable[cosineIndex][packet[i]+128];
-            cosineIndex = (cosineIndex + 1) % cosineRealLookupTable.length;
-            count++;
-            if(startIndex+count >= capacity)
-                break;
-        }
-        samplePacket.setSize(samplePacket.size()+count);	// update the size of the sample packet
-        samplePacket.setSampleRate(sampleRate);				// update the sample rate
-        samplePacket.setFrequency(channelFrequency);		// update the frequency
+        samplePacket.setSize(samplePacket.size() + count);    // update the size of the sample packet
+        samplePacket.setSampleRate(sampleRate);                // update the sample rate
+        samplePacket.setFrequency(frequency);                // update the frequency
         return count;
     }
 }
