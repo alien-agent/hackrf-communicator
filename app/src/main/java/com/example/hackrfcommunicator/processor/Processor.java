@@ -1,10 +1,7 @@
 package com.example.hackrfcommunicator.processor;
 
-import java.util.concurrent.ArrayBlockingQueue;
-
 public class Processor extends Thread {
     private final int fftSize = 1024;                    // Size of the FFT
-    private int frameRate = 10;                    // Frames per Second
     public float[] mag;
     private FFT fftBlock;
 

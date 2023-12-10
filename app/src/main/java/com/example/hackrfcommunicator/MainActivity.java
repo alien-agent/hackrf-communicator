@@ -24,9 +24,11 @@ import com.example.hackrfcommunicator.processor.SamplePacket;
 import com.example.hackrfcommunicator.processor.Signed8BitIQConverter;
 import com.github.mikephil.charting.charts.BarChart;
 import com.github.mikephil.charting.charts.Chart;
+import com.github.mikephil.charting.components.XAxis;
 import com.github.mikephil.charting.data.BarData;
 import com.github.mikephil.charting.data.BarDataSet;
 import com.github.mikephil.charting.data.BarEntry;
+import com.github.mikephil.charting.formatter.ValueFormatter;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -34,11 +36,14 @@ import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.TimeUnit;
 
 public class MainActivity extends AppCompatActivity implements IQSourceCallback {
+    private static final long europaPlus = 106200000;
+    private static final long wifi24ghz = 2400000000l;
+    private static final long wifi5ghz = 5000000000l;
     private long lastDrawing;
     private static final int frameRate = 15;
     private HackrfSource hackrf;
     private int sampRate = 2000000;
-    private long frequency = 106200000;
+    private long frequency = europaPlus;
     private Processor processor;
     private ArrayList<BarEntry> drawingData = new ArrayList<BarEntry>();
     private Boolean upd = false;
@@ -63,16 +68,23 @@ public class MainActivity extends AppCompatActivity implements IQSourceCallback 
         chart.setBackgroundColor(Color.DKGRAY);
         chart.getDescription().setEnabled(false);
         chart.setTouchEnabled(false);
+        chart.getLegend().setEnabled(false);
 
         // Configure X axis
-//        chart.getXAxis().setAxisMinimum((float) (frequency - this.sampRate * 0.75));
-//        chart.getXAxis().setAxisMaximum((float) (frequency + this.sampRate * 0.75));
         chart.getXAxis().setTextColor(Color.WHITE);
+        chart.getXAxis().setPosition(XAxis.XAxisPosition.BOTTOM);
 
         // Configure Y axis
         chart.getAxisLeft().setAxisMaximum(0);
         chart.getAxisLeft().setAxisMinimum(-100);
         chart.getAxisLeft().setTextColor(Color.WHITE);
+        chart.getAxisLeft().setInverted(true);
+        chart.getAxisLeft().setValueFormatter(new ValueFormatter() {
+            @Override
+            public String getFormattedValue(float value) {
+                return String.format("%2.0f", -100-value);
+            }
+        });
 
         // Disable right axis
         chart.getAxisRight().setEnabled(false);
@@ -92,8 +104,8 @@ public class MainActivity extends AppCompatActivity implements IQSourceCallback 
         ArrayList<BarEntry> drawingData = new ArrayList<BarEntry>();
         for (int i = 0; i < processor.mag.length; i++) {
             float xValue = i * (sampRate / processor.mag.length);  // Assuming linear x-axis
-//            float xValue = (float) (frequency - this.sampRate * 0.75 + i*this.sampRate/processor.mag.length)/1000000;
-            float yValue = processor.mag[i];
+//            float xValue = (float) (frequency - this.sampRate * 0.75 + i*this.sampRate*1.5/processor.mag.length)/1000000;
+            float yValue = -100-processor.mag[i]; // Real value is processor.mag[i]. For displaying purposes, make lower values (higher signal) weigh more.
             drawingData.add(new BarEntry(xValue, yValue));
         }
 
